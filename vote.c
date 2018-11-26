@@ -48,13 +48,25 @@ void InitialPlane(void)
 void NextState(int row,int col)
 {
     int sum;
-    sum = CountMoore9(Vote,1,row,col);
+    
+		sum = CountMoore9(Vote,1,row,col);
 
-    if(sum >= 0 && sum <= 4){
-        Vote[row][col].val = 0;
+		double rand = genrand_real1();
+		
+    if((sum >= 0 && sum <= 3) || sum == 5 ) {
+
+			if (rand > 0.01) {
+				Vote[row][col].val = 0;
+			} else {
+				Vote[row][col].val = 1;			
+			}
     }
     else{
-        Vote[row][col].val = 1;
+			if (rand > 0.011) {
+				Vote[row][col].val = 1;
+			} else {
+				Vote[row][col].val = 0;
+			}
     }
 
     /*
