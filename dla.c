@@ -24,7 +24,7 @@ static int NumberAfter;
 
 void Initial(void)
 {
-  NrOfColors = 2;
+  NrOfColors = 1;
 	
 	MaxTime = 2147483647; /* default=2147483647 */
   nrow = 200; /* # of row (default=100)*/
@@ -118,7 +118,7 @@ void Update(void)
 	
 	Display(Free, Fixed, Combi);
   Synchronous(2,Free,Fixed,Combi);
-  MDiffusion(Free);
+	MDiffusion(Free);
 
 	//now, how to show the per capita growth function?
 }

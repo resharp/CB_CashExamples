@@ -58,6 +58,6 @@ void Update(void)
   Display(Prime);
 
   Synchronous(1,Prime);
-  while( Mouse()<0) {};         // Remove this line if you just want it to update all the time
+  //while( Mouse()<0) {};         // Remove this line if you just want it to update all the time
   //Asynchronous();
 }

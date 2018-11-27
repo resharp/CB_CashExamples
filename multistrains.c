@@ -73,7 +73,7 @@ void NextState(int row,int col)
 	if (Strains[row][col].val == 0) { 
 		int sum = CountMoore9(Strains, color, row, col);
 		
-		if (sum >= 3 ) {
+		if (sum >= 1 ) {
 			if (rand < birth_ratio) {
 				Strains[row][col].val = color;
 			}

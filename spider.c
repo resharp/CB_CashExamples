@@ -26,7 +26,7 @@ void Initial(void)
   MaxTime = 2147483647; /* default=2147483647 */
   nrow = 200; /* # of row (default=100)*/
   ncol = 200; /* # of column (default=100)*/
-  nplane = 1; /* # of planes (default=0)*/
+  nplane = 2; /* # of planes (default=0)*/
   scale = 2; /* size of the window (default=2)*/
   boundary = WRAP; /* the type of boundary: FIXED, WRAP, ECHO (default=WRAP). Note that
 		      Margolus diffusion is not supported for ECHO. */
@@ -91,7 +91,8 @@ void NextState(int row,int col)
 
 	double a1 = 0.4;	// birth rate of mosquitoes
 	double b1 = 0.5; // conversion rate of mosquitoes to spiders
-	double d = 0.05;	// death rate of spiders
+	double d = 0.1;	// death rate of spiders
+	double d_m = 0.000; //small death rate of mosquitoes
 
 
 	//Birth
@@ -115,10 +116,14 @@ void NextState(int row,int col)
 		rand1 = genrand_real1();
 		if (own_state == 2) {
 			death_ratio = d;	
+			if (rand1 < death_ratio) {
+					Life[row][col].val = 0;
+			}
 		}
-		if (rand1 < death_ratio) {
-				Life[row][col].val = 0;
-		}
+		// if (own_state == 1) {
+			// death_ratio = d_m;
+		// }
+
 	}
 	
 	double conversion_ratio;
@@ -186,10 +191,10 @@ void Update(void)
 	*/
 	//-----------------
 	
-	//SpaceTimePlot(SpaceTimePlane, Life);
+	SpaceTimePlot(SpaceTimePlane, Life);
 
-  Display(Life);
-  //Display(Life, SpaceTimePlane);
+  //Display(Life);
+  Display(Life, SpaceTimePlane);
 
 	//PerfectMix(Life);
 	Plot(1, Life);

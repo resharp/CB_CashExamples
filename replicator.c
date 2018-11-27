@@ -26,7 +26,7 @@ void Initial(void)
   MaxTime = 2147483647; /* default=2147483647 */
   nrow = 200; /* # of row (default=100)*/
   ncol = 200; /* # of column (default=100)*/
-  nplane = 1; /* # of planes (default=0)*/
+  nplane = 2; /* # of planes (default=0)*/
   scale = 2; /* size of the window (default=2)*/
   boundary = WRAP; /* the type of boundary: FIXED, WRAP, ECHO (default=WRAP). Note that
 		      Margolus diffusion is not supported for ECHO. */
@@ -50,20 +50,21 @@ void InitialPlane(void)
   */
 	//InitialSet(Life,2,0,1,0.3,2,0.3);
 	
-	int xpos = 50;
-	int size = 20;
+	//Let's start with just X
+	int xpos = 10;
+	int size = 10;
 	for (int i=xpos;i<xpos + size;i=i+1) {
 		for (int j=xpos;j<xpos + size;j=j+1) {
 			Life[i][j].val = 1;
 		}
 	}
-	xpos = 150;
-	size = 10;
-	for (int i=xpos;i<xpos + size;i=i+1) {
-		for (int j=xpos;j<xpos + size;j=j+1) {
-			Life[i][j].val = 2;
-		}
-	}
+	// xpos = 20;
+	// size = 10;
+	// for (int i=xpos;i<xpos + size;i=i+1) {
+		// for (int j=xpos;j<xpos + size;j=j+1) {
+			// Life[i][j].val = 2;
+		// }
+	// }
 	
 	NumberBefore = countGlobal(Life, 1);
 	NumberAfter = NumberBefore;
@@ -76,88 +77,65 @@ void NextState(int row,int col)
 	int nb_state;
 	int own_state;
 	
-	//double rand1;
+	double rand1;
 	double rand2;
-	double rand3;
 	double death_ratio;
 	double birth_ratio;
 
 	own_state = Life[row][col].val;
 	nb_state = RandomMoore8(Life, row, col);
 
-	//founder controlled
-/*
-	double a1 = 0.3;
-	double a2 = 0.3;
-	double b1 = 0.15; // intra-species : among your own kind
-	double b2 = 0.15;
-	double c1 = 0.5;	// inter-species: competition with other species
-	double c2 = 0.5;
-*/	
-	
 	//non-trivial co-existence
 
-	double a1 = 0.9;
-	double a2 = 0.9;
-	double b1 = 0.025; // intra-species : among your own kind
-	double b2 = 0.2;
-	double c1 = 0.05;	// inter-species: competition with other species
-	double c2 = 0.001;
+	//Master sequence are 1; mutants are 2;
 
+	double a1 = 1;	// replication rate of master sequence
+	double a2 = 0.9;		// replication rate of mutants
+	double q = 0.92; 	// quality of replication (X changing into X or a chance of (1-q) into Y)
+	double d = 0.1;		// decay rate of master sequence
+	double d2 = 0.1;	// decay rate of mutants
 
 	//Birth
 	if (own_state == 0) {
 
-		//birth		
+		//replication
 		if (nb_state >= 0 ) {
-			if (nb_state == 1) {
+			if (nb_state == 1) { // master sequence
+
 				birth_ratio = a1; //a1
+				rand2 = genrand_real1();
+				if (rand2 < birth_ratio ) {
+					rand2 = genrand_real1();
+					if (rand2 < q ) {
+						Life[row][col].val = 1;	
+					} else {
+						Life[row][col].val = 2;
+					}
+				}
 			}
-			if (nb_state == 2) {
-				birth_ratio = a2;	//a2
-			}
-			rand2 = genrand_real1();
-			if (rand2 < birth_ratio ) {
-				Life[row][col].val = nb_state;
+			if (nb_state == 2) { // mutant
+				birth_ratio = a2;
+				rand2 = genrand_real1();
+				if (rand2 < birth_ratio ) {
+					Life[row][col].val = 2;
+				}				
 			}
 		}
 	}
 	
-	//Death
-	/*
+	//Decay
 	if (own_state > 0) {
 	
 		rand1 = genrand_real1();
 		if (own_state == 1) {
-			death_ratio = b1;	
+			death_ratio = d;
 		}
 		if (own_state == 2) {
-			death_ratio = b2;	
+			death_ratio = d2;
 		}
 		if (rand1 < death_ratio) {
 				Life[row][col].val = 0;
 		}
-	}
-	*/
-	
-	// (symmetric) death by competition
-	if (own_state > 0 && nb_state > 0) {
-
-		rand3 = genrand_real1();
-	
-		if (own_state == 1) {
-			death_ratio = (own_state != nb_state)*c1 + (own_state == nb_state)*b1;	
-		} else if (own_state == 2) {
-			death_ratio = (own_state != nb_state)*c2 + (own_state == nb_state)*b2;	
-		} else {
-			fprintf(stderr,"NextState(): wrong value in own_state\n");
-			exit(1);
-		}
-
-		if (rand3 < death_ratio) {
-			Life[row][col].val = 0;
-		}
-
 	}
 }
 
@@ -166,24 +144,27 @@ void Update(void)
 	// Poor man's graph
 	if (Time != 0 && Time % 200 == 0) {
 		
-		//fprintf(stderr,"Update(): Run  %5d times and now X: %3d %% and Y: %3d %% \n", Time, PercX, PercY);
-
 		int PercX = 100 * countGlobal(Life, 1)/(nrow*ncol);
 		int PercY = 100 * countGlobal(Life, 2)/(nrow*ncol);
-		char array[101]; 
-		char string[101];
-		for (int i = 0;i<100;i++) {
-			array[i]='-';
-			if (i == PercX) {
-				array[i] = 'X';
-			} 
-			if (i == PercY) {
-				array[i] = 'Y';
-			}
-		}
-		array[100] = '\0';
-		strcpy(string, array);
-		printf("%s\n", string);
+
+		fprintf(stderr,"Update(): Run  %5d times and now X: %3d %% and Y: %3d %% \n", Time, PercX, PercY);
+
+		// int PercX = 100 * countGlobal(Life, 1)/(nrow*ncol);
+		// int PercY = 100 * countGlobal(Life, 2)/(nrow*ncol);
+		// char array[101]; 
+		// char string[101];
+		// for (int i = 0;i<100;i++) {
+			// array[i]='-';
+			// if (i == PercX) {
+				// array[i] = 'X';
+			// } 
+			// if (i == PercY) {
+				// array[i] = 'Y';
+			// }
+		// }
+		// array[100] = '\0';
+		// strcpy(string, array);
+		// printf("%s\n", string);
 	}
 
 	Synchronous(1,Life);
@@ -211,13 +192,13 @@ void Update(void)
 	*/
 	//-----------------
 	
-	//SpaceTimePlot(SpaceTimePlane, Life);
+	SpaceTimePlot(SpaceTimePlane, Life);
 
-  Display(Life);
-  //Display(Life, SpaceTimePlane);
+  //Display(Life);
+  Display(Life, SpaceTimePlane);
 
-	//PerfectMix(Life);
-	//Plot(1, Life);
+	PerfectMix(Life);
+	Plot(1, Life);
 	
 	//Asynchronous();
 
