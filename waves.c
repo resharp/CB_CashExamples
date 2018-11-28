@@ -69,7 +69,6 @@ void InitialPlane(void)
 			}
 		}
 	}
-
 	
 	NumberBefore = countGlobal(Life, 1);
 	NumberAfter = NumberBefore;
@@ -103,22 +102,18 @@ void NextState(int row,int col)
 	//Birth
 	if (own_state == 0) {
 
-		//fprintf(stderr,"NextState(): nb_state  %5d rce_state   %5d", nb_state, rce_state);
-	
-	
-		//replication by replicase
 		_Bool replicator = (nb_state > 0 );
 		
-		rce_state = RandomMoore8(Life, row, col);
+		rce_state = RandomMoore8(Life, row, col); //replicase state
 
 		int difference;
 		if (rce_state > 0) {
-			difference = (nb_state - rce_state);
+			difference = (nb_state - rce_state); //to prevent extracting from empty space
 		} else {
 			difference = 0;
 		}
 	
-		int possibleOutcome = -(SizeOfHyperCycle - 1);
+		int possibleOutcome = -(SizeOfHyperCycle - 1); //close the loop
 		
 		_Bool sit1 = (difference == 1);
 		_Bool sit2 = (difference == possibleOutcome);
@@ -134,8 +129,7 @@ void NextState(int row,int col)
 					Life[row][col].val = nb_state;
 				
 				} 
-			} else {
-				//autonomous replication
+			} else { //autonomous replication
 				birth_ratio = a;
 				rand2 = genrand_real1();
 				if (rand2 < birth_ratio) {
@@ -165,50 +159,15 @@ void Update(void)
 		// int PercY = 100 * countGlobal(Life, 2)/(nrow*ncol);
 
 		// fprintf(stderr,"Update(): Run  %5d times and now X: %3d %% and Y: %3d %% \n", Time, PercX, PercY);
-
 	// }
 
 	Synchronous(1,Life);
 
-	// int possibleOutcome = -(SizeOfHyperCycle - 1);
-
-	// int difference = 1;
-	
-	// _Bool sit1 = (difference == 1);
-	// _Bool sit2 = (difference == possibleOutcome);
-	
-	// _Bool combi = sit1 || sit2;
-	// fprintf(stderr,"Update(): sit1: %d and sit2: %d combi: %d \n", sit1, sit2, combi);
-	
-	
-	//-----------------
-	/*
-	double number_rate;
-	double absolute_growth;
-	
-	if (Time == 1) {
-		number_rate = 0.0;
-		absolute_growth = 0;
-		
-	}
-	if (Time % 100 == 0) {
-		NumberAfter = countGlobal(Life, 1);
-	
-		absolute_growth = NumberAfter-NumberBefore;
-
-		number_rate= absolute_growth/NumberBefore;
-	
-		NumberBefore = NumberAfter;
-	}
-	PlotXY(Time, number_rate);
-	*/
-	//-----------------
-	
 	//SpaceTimePlot(SpaceTimePlane, Life);
 
   Display(Life);
   //Display(Life, SpaceTimePlane);
-
+	
 	//PerfectMix(Life);
 	Plot(1, Life);
 	
