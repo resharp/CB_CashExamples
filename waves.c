@@ -20,13 +20,13 @@ static TYPE2** SpaceTimePlane;
 
 static int NumberBefore;
 static int NumberAfter;
-static int SizeOfHyperCycle = 9;
+static int SizeOfHyperCycle = 11;
 
 void Initial(void)
 {
   MaxTime = 2147483647; /* default=2147483647 */
-  nrow = 200; /* # of row (default=100)*/
-  ncol = 200; /* # of column (default=100)*/
+  nrow = 300; /* # of row (default=100)*/
+  ncol = 300; /* # of column (default=100)*/
   nplane = 1; /* # of planes (default=0)*/
   scale = 2; /* size of the window (default=2)*/
   boundary = WRAP; /* the type of boundary: FIXED, WRAP, ECHO (default=WRAP). Note that
@@ -60,7 +60,11 @@ void InitialPlane(void)
 		int xpos = nr_row;
 		int ypos = nr_col;
 		
-		int size = 30;
+		// int xpos = 10 + 10*s;
+		// int ypos = 10;
+		
+		
+		int size = 10;
 		for (int i=xpos;i<xpos + size;i++) {
 			for (int j=ypos;j<ypos + size;j++) {
 				if (i <= nrow && j <= ncol) {
@@ -69,6 +73,8 @@ void InitialPlane(void)
 			}
 		}
 	}
+	
+	
 	
 	NumberBefore = countGlobal(Life, 1);
 	NumberAfter = NumberBefore;
@@ -152,6 +158,13 @@ void NextState(int row,int col)
 
 void Update(void)
 {
+	if (Time == 1) {
+		PerfectMix(Life);
+	}
+	// if (Time > 0 && Time % 10000 == 0) {
+		// PerfectMix(Life);
+	// }
+	
 	// Poor man's graph
 	// if (Time != 0 && Time % 200 == 0) {
 		
@@ -169,7 +182,7 @@ void Update(void)
   //Display(Life, SpaceTimePlane);
 	
 	//PerfectMix(Life);
-	Plot(1, Life);
+	//Plot(1, Life);
 	
 	if (Time % 100 == 0) {
 		MDiffusion(Life);
