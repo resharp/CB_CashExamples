@@ -18,10 +18,13 @@ static TYPE2** ST;
 
 double X2Y =0.7;
 double Y2X =0.7;
-double Y2Z =1.0;
+double Y2Z =0.7;
 
 const double NON=0.3;
 const double d=0.3;
+
+_Bool WellMixed = 0;
+
 double sumx,sumy,sumz,px,py,pz,pz2,psum,ran;
 
 
@@ -111,14 +114,18 @@ else{
 
 void Update(void)
 {
-  int x;
-  x = countGlobal(Cheater,1);
-  //Plot(1,Cheater);
+  // int x;
+  // x = countGlobal(Cheater,1);
+  Plot(1,Cheater);
   SpaceTimePlot(ST,Cheater);
   Display(Cheater,ST);
   Synchronous(1,Cheater);
+
   if (Time%10==0){
      MDiffusion(Cheater);
   }
-  //PerfectMix(Cheater);
+
+  if (WellMixed) {
+		PerfectMix(Cheater);
+	}
 }
