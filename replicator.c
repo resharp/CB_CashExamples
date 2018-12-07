@@ -91,7 +91,7 @@ void NextState(int row,int col)
 
 	double a1 = 1;	// replication rate of master sequence
 	double a2 = 0.9;		// replication rate of mutants
-	double q = 0.92; 	// quality of replication (X changing into X or a chance of (1-q) into Y)
+	double q = 0.95; 	// quality of replication (X changing into X or a chance of (1-q) into Y)
 	double d = 0.1;		// decay rate of master sequence
 	double d2 = 0.1;	// decay rate of mutants
 
