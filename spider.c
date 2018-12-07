@@ -116,6 +116,11 @@ void NextState(int row,int col)
 		rand1 = genrand_real1();
 		if (own_state == 2) {
 			death_ratio = d;	
+		
+			if (Time == 1000) {
+				death_ratio = 0.99;
+			}
+			
 			if (rand1 < death_ratio) {
 					Life[row][col].val = 0;
 			}
