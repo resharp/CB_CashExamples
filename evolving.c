@@ -19,14 +19,17 @@ static TYPE2** ColorDeath;	// Plane that displays evolved deathrates
 static TYPE2** ColorMap;	// Plane that displays colorbar
 static TYPE2** ST;			// Space time plot
 
-static TYPE2 empty={0,0,0,0,0,0.,0.,0.,0.,0.}; // Predefine empty cell
+static TYPE2 empty= {0,0,0,0,0,0.,0.,0.,0.,0.}; // Predefine empty cell
 
 double init_birth_rate=0.32;	// Starting birthrate
 double init_death_rate=0.2;	// Startint deathrate
+double init_fill_grade = 0.02;  //Initial filling of grid per species
 double deathrate = 0.1;		// Minimal deathrate
 double mut_rate= 0.005;		// Chance of mutations
 double mut_step= 0.2;		// Size of mutations
 double max_fval=1.;		// Upper bound (if applicable) for your evolvable parameter
+
+
 
 void Initial(void)
 {
@@ -64,24 +67,25 @@ void InitialPlane(void)
   Boundaries2(ColorDeath); 		// Init boundaries for planes
   Boundaries2(ColorMap);		// Init boundaries for planes
 
-
-  // PART I: Store everyones birth/deathrates in fval/fval2
-  // PART II: Make colorbar
   int i,j;
   for(i=1;i<=nrow;i++)for(j=1;j<=ncol;j++)
     {
-// PART I
-    Comp[i][j]=empty;
-    Comp[i][j].fval=init_birth_rate;
-    Comp[i][j].fval2=init_death_rate;
-    if(genrand_real1()<0.03){
-      Comp[i][j].val=1;
-    }
-// PART II
-    if(j>10 && j < 30) ColorMap[i][j].val= 110 - (float)i/(float)nrow*100;	//maps fval on Comp plane to val on Color plane
+		// PART I: Store everyones birth/deathrates in fval/fval2
+    Comp[i][j] = empty;
+    Comp[i][j].fval = init_birth_rate;
+    Comp[i][j].fval2 = init_death_rate;
+		
+		double rand = genrand_real1();
+		if(rand < init_fill_grade){ 
+      Comp[i][j].val = 1;
+    } else if (rand < 2*init_fill_grade) {
+			Comp[i][j].val = 2;
+		}
+		// PART	II: Make colorbar
+    if(j>10 && j < 30) {
+			ColorMap[i][j].val = 110 - (float)i/(float)nrow*100;	//maps fval on Comp plane to val on Color plane
+		}
   }
-
-
 
   // Initialise colorRGB table (for colouring 2nd and 3rd plane)
   int r=0,g=0,b=255;
@@ -116,15 +120,18 @@ void NextState(int row,int col)
   TYPE2 nei=empty;
   nei = RandomMooreS8(Comp,row,col);	//this can be a pointer, see RandomMooreP8(Comp,row,col);
 
-  if(Comp[row][col].val==0){
-    if(nei.val==1 &&  genrand_real1()<nei.fval ) {
-      Comp[row][col]=nei;				//birth
+  if(Comp[row][col].val == 0){
 
-	// Mutate birth
+		if(nei.val > 0 &&  genrand_real1() < nei.fval ) {
+      
+			Comp[row][col]=nei;				//birth
+
+			// Mutate birth
       if(genrand_real1()<mut_rate) Comp[row][col].fval += mut_step*(genrand_real2()-0.5);	//mutations
       if(Comp[row][col].fval<0.) Comp[row][col].fval = (-1)*Comp[row][col].fval;		//bounds mutations to decent values
       if(Comp[row][col].fval>1.) Comp[row][col].fval = 2. - Comp[row][col].fval;
-	// Mutate death
+
+			// Mutate death
       if(genrand_real1()<mut_rate) Comp[row][col].fval2 += mut_step*(genrand_real2()-0.5);	//mutations
       if(Comp[row][col].fval2<0.) Comp[row][col].fval2 = (-1)*Comp[row][col].fval2;		//bounds mutations to decent values
       if(Comp[row][col].fval2>1.) Comp[row][col].fval2 = 2. - Comp[row][col].fval2;
@@ -134,9 +141,10 @@ void NextState(int row,int col)
   }
   else
     {
-     if(genrand_real1()<(Comp[row][col].fval2+deathrate)) Comp[row][col]=empty; //death
-    }
-
+    if( genrand_real1() < (Comp[row][col].fval2 + deathrate )) { 
+			Comp[row][col]=empty; //death
+		}
+	}
 
 }
 // This function maps fvals stored in individuals to a colorvalue in the colorRGB table
@@ -144,11 +152,14 @@ int GetColorIndexFrom(int val,double fval)
 {
   int color;
   double max_fval_we_color;
-
-  if(val==0) return 0;
+  if( val==0 ) return 0;
   max_fval_we_color = (max_fval*100. - 10.)/100.; //Remember that colour indexes in the gradient start at 10
-  if(fval> max_fval_we_color ) color=100;
-  else color= (int)( 100.* fval/max_fval )+10 ;
+  if (fval> max_fval_we_color ) {
+		color=100;
+	}
+  else {
+		color= (int)( 100.* fval/max_fval )+10;
+	}
   return color;
 }
 
@@ -158,49 +169,42 @@ void Update(void)
   Display(Comp,ColorBirth,ColorDeath,ST,ColorMap);
   Synchronous(1,Comp);
 
-// ************************************************************************************//
-// GRAPHING Below is some code to plot fvals...
-	// 1) ...over time for 120 random individuals every 10 timesteps
-	// 2) ...as a color in the second plane
-// ************************************************************************************//
+	// ************************************************************************************//
+	// GRAPHING Below is some code to plot fvals...
+		// 1) ...over time for 120 random individuals every 10 timesteps
+		// 2) ...as a color in the second and third plane
+	// ************************************************************************************//
   int i, j;
-if(Time%100==0) {
 
-   int r;
-  for(r=1;r<=120;r++)
-	{
-          i = genrand_int(1,nrow);
-	  j = genrand_int(1,ncol);
-	  if(Comp[i][j].val > 0)
-	  {
-            PlotXY(Time,Comp[i][j].fval);
-            PlotXY(Time,Comp[i][j].fval2);
-	  }
+	if(Time%100==0) {
+
+		int r;
+		for(r=1;r<=120;r++)
+		{
+			i = genrand_int(1,nrow);
+			j = genrand_int(1,ncol);
+			if(Comp[i][j].val > 0)
+			{
+				PlotXY(Time,Comp[i][j].fval);
+				PlotXY(Time,Comp[i][j].fval2);
+			}
+		}
 	}
-  // Setup display of graph (once)
+	// Setup display of graph (once)
+	if(Time == 0)
+	{
+		GracePrintf("g0 on");
+		GracePrintf("with g0");
+		GracePrintf("focus g0");
+		GracePrintf("s1 on");
+		GracePrintf("s1 color 5");
+		GracePrintf("s1 line linestyle 0");
+		GracePrintf("s1 symbol 1");
+		GracePrintf("s1 symbol size 0.2");
+	}
 
-}
-
-if(Time == 0)
-{
-	GracePrintf("g0 on");
-	GracePrintf("with g0");
-	GracePrintf("focus g0");
-	GracePrintf("s1 on");
-	GracePrintf("s1 color 5");
-	GracePrintf("s1 line linestyle 0");
-	GracePrintf("s1 symbol 1");
-	GracePrintf("s1 symbol size 0.2");
-}
-
-for(i=1;i<=nrow;i++)for(j=1;j<=ncol;j++){
-    ColorBirth[i][j].val=GetColorIndexFrom(Comp[i][j].val, Comp[i][j].fval );	//maps fval on Comp plane to val on Color plane
-    ColorDeath[i][j].val=GetColorIndexFrom(Comp[i][j].val, Comp[i][j].fval2 );	//maps fval on Comp plane to val on Color plane
-}
-
-
-// ************************************************************************************//
-// END PLOTTING PART
-// ************************************************************************************//
-
+	for(i=1;i<=nrow;i++)for(j=1;j<=ncol;j++){
+		ColorBirth[i][j].val = GetColorIndexFrom(Comp[i][j].val, Comp[i][j].fval );	//maps fval on Comp plane to val on Color plane
+		ColorDeath[i][j].val = GetColorIndexFrom(Comp[i][j].val, Comp[i][j].fval2 );	//maps fval on Comp plane to val on Color plane
+	}
 }
