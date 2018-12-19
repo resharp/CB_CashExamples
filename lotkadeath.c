@@ -16,6 +16,12 @@
 static TYPE2** Competition;
 // static TYPE2** SpaceTimePlane;
 
+int EMPTY = 0;
+int MOSQUITO = 1;
+int SPIDER1 = 2;
+int SPIDER2 = 4;
+
+
 void Initial(void)
 {
     MaxTime = 2147483647; /* default=2147483647 */
@@ -33,53 +39,53 @@ void Initial(void)
 void InitialPlane(void)
 {
     MakePlane(&Competition/*,&SpaceTimePlane*/);
-    InitialSet(Competition,3,0,1,0.1,2,0.1,3,0.1); // I.o.w., half the grid starts as 1, the other are EMPTY (0)
+    InitialSet(Competition,3,0,MOSQUITO,0.1,SPIDER1,0.1,SPIDER2,0.1); // I.o.w., half the grid starts as 1, the other are EMPTY (0)
     Boundaries2(Competition);
 }
 
-int spiderstokill = 0; //The amount of spiders we kill every nth timestep
-
 void NextState(int row,int col)
 {
+
 	int rand_neigh = RandomMoore8(Competition,row,col);
 	int self = Competition[row][col].val;
 
-	double a = 0.1;
-	double b2 = 0.8; //rood
-	double b3 = 0.8; //groen
-	double d2 = 0.06; //rood
-	double d3 = 0.04; //groen
-	
-	if(self == 0)
-	{
-		if(rand_neigh == 1)
-		{
-			if(genrand_real1() < a)
-				Competition[row][col].val = 1;
+	double birth_rate_mosquito = 0.1;
+	double consumption1 = 0.7; 
+	double consumption2 = 0.7; 
+	double death1 = 0.05; //rood
+	double death2 = 0.04; //
+		
+	if(self == EMPTY) {
+		if(rand_neigh == MOSQUITO) {
+			if(genrand_real1() < birth_rate_mosquito) {
+				Competition[row][col].val = MOSQUITO;
+			}
 		}  
 	}
-	else if(self == 1)
-	{
-		if(rand_neigh == 2 && genrand_real1() < b2)
-			Competition[row][col].val = 2;
-		if(rand_neigh == 3 && genrand_real1() < b3)
-			Competition[row][col].val = 3;
-	}
-	else if(self == 2)
-	{
-		if(genrand_real1() < d2)
-			Competition[row][col].val = 0;
-		else if(spiderstokill>0){ //Kill a spider if we still have to kill spiders
-			spiderstokill = spiderstokill - 1;
-			Competition[row][col].val = 0;
+
+	if(self == MOSQUITO) {
+		
+		double cons_rate;
+		if(rand_neigh == SPIDER1 || rand_neigh == SPIDER2 ) {
+			if (rand_neigh == SPIDER1) {
+				cons_rate = consumption1;
+			} else {
+				cons_rate = consumption2;
+			}
+			if(genrand_real1() < cons_rate) {
+				Competition[row][col].val = rand_neigh;
+			}
 		}
 	}
-	else if(self == 3)
-	{
-		if(genrand_real1() < d3)
-			Competition[row][col].val = 0;
-		else if(spiderstokill>0){ //Kill a spider if we still have to kill spiders
-			spiderstokill = spiderstokill - 1;
+
+	if(self == SPIDER1 || self == SPIDER2 )	{
+		double death_rate;
+		if (self == SPIDER1) {
+			death_rate = death1; 
+		} else { 
+			death_rate = death2;
+		}
+		if(genrand_real1() < death_rate) {
 			Competition[row][col].val = 0;
 		}
 	}
@@ -91,13 +97,10 @@ void Update(void)
   Display(Competition);
   Asynchronous();//1,Competition);
   // SpaceTimePlot(SpaceTimePlane,Competition);
-  //int mosquitoes;
-  //int spiders;
-  //mosquitoes = countGlobal(Competition,1);
-  //spiders = countGlobal(Competition,2);
+ 
   Plot(1,Competition);
-  if(Time%10000000==0) spiderstokill=1000; //Every 100th timestep, kill 100 spiders
   //if(Time%50==0) {MDiffusion(Competition);}
- // Transfer the state of Vote to the SpaceTimePlane  
-   // Display(Competition,SpaceTimePlane);
+  // Transfer the state of Vote to the SpaceTimePlane  
+  // Display(Competition,SpaceTimePlane);
+	//while( Mouse()<=0) {}; // you can run the program continuously by commenting out this statement.
 }
