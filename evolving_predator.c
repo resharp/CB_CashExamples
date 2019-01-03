@@ -14,7 +14,7 @@
 #include <cash2-s.h>
 
 static TYPE2** Comp;		// Normal Plane
-static TYPE2** ColorBirth;	// Plane that displays evolved birthrates
+//static TYPE2** ColorBirth;	// Plane that displays evolved birthrates
 static TYPE2** ColorDeath;	// Plane that displays evolved deathrates
 static TYPE2** ColorMap;	// Plane that displays colorbar
 static TYPE2** ST;			// Space time plot
@@ -23,10 +23,10 @@ static TYPE2 empty= {0,0,0,0,0,0.,0.,0.,0.,0.}; // Predefine empty cell
 
 double init_birth_rate=0.5;	// Starting birthrate
 double init_death_rate=0.05;	// Startint deathrate
-double init_fill_grade = 0.02;  //Initial filling of grid per species
+double init_fill_grade = 0.01;  //Initial filling of grid per species
 double deathrate = 0.01;		// Minimal deathrate (We zitten de minmimale death rate iets hoger)
 double mut_rate= 0.005;		// Chance of mutations
-double mut_step= 0.1;		// Size of mutations
+double mut_step= 0.2;		// Size of mutations
 double max_fval=1.;		// Upper bound (if applicable) for your evolvable parameter
 
 double birth_rate_mosquito = 0.1;
@@ -41,7 +41,7 @@ void Initial(void)
   MaxTime = 2147483647; /* default=2147483647 */
   nrow = 300; /* # of row (default=400)*/
   ncol = 300; /* # of column (default=400)*/
-  nplane = 5; /* # of planes (default=0)*/
+  nplane = 4; /* # of planes (default=0)*/
   margin = 5;
   scale = 1; /* size of the window (default=2)*/
   boundary = WRAP; /* the type of boundary: FIXED, WRAP, ECHO (default=WRAP). Note that
@@ -55,7 +55,7 @@ void Initial(void)
 
 void InitialPlane(void)
 {
-  MakePlane(&Comp,&ColorBirth,&ColorDeath,&ColorMap,&ST); // Init all planes
+  MakePlane(&Comp,/*&ColorBirth*/&ColorDeath,&ColorMap,&ST); // Init all planes
 
   /* InitialSet(1,2,3,4,5)
     1: name of plane
@@ -68,7 +68,7 @@ void InitialPlane(void)
   //InitialSet(Comp,1,0,1,0.5);
   //InitialSet(Color,1,0);
   Boundaries2(Comp);			// Init boundaries for planes
-  Boundaries2(ColorBirth);		// Init boundaries for planes
+  //Boundaries2(ColorBirth);		// Init boundaries for planes
   Boundaries2(ColorDeath); 		// Init boundaries for planes
   Boundaries2(ColorMap);		// Init boundaries for planes
 
@@ -83,8 +83,8 @@ void InitialPlane(void)
 		double rand = genrand_real1();
 		if(rand < init_fill_grade){ 
       Comp[i][j].val = SPIDER1;
-    } else if (rand < 2*init_fill_grade) {
-			Comp[i][j].val = SPIDER2;
+    // } else if (rand < 2*init_fill_grade) {
+			// Comp[i][j].val = SPIDER2;
 		} else if (rand < 3*init_fill_grade) {
 			Comp[i][j].val = MOSQUITO;
 		}
@@ -151,9 +151,9 @@ void NextState(int row,int col)
 				Comp[row][col]=nei;				//birth
 
 				//Mutate birth
-				if(genrand_real1()<mut_rate) Comp[row][col].fval += mut_step*(genrand_real2()-0.5);	//mutations
-				if(Comp[row][col].fval<0.) Comp[row][col].fval = (-1)*Comp[row][col].fval;		//bounds mutations to decent values
-				if(Comp[row][col].fval>1.) Comp[row][col].fval = 2. - Comp[row][col].fval;
+				// if(genrand_real1()<mut_rate) Comp[row][col].fval += mut_step*(genrand_real2()-0.5);	//mutations
+				// if(Comp[row][col].fval<0.) Comp[row][col].fval = (-1)*Comp[row][col].fval;		//bounds mutations to decent values
+				// if(Comp[row][col].fval>1.) Comp[row][col].fval = 2. - Comp[row][col].fval;
 
 				//Mutate death
 				if(genrand_real1()<mut_rate) Comp[row][col].fval2 += mut_step*(genrand_real2()-0.5);	//mutations
@@ -187,8 +187,12 @@ int GetColorIndexFrom(int val,double fval)
 
 void Update(void)
 {
-  SpaceTimePlot(ST,ColorBirth);
-  Display(Comp,ColorBirth,ColorDeath,ST,ColorMap);
+  //SpaceTimePlot(ST,ColorBirth);
+  Display(Comp,ColorDeath,ST,ColorMap);
+  //Display(Comp,ColorBirth,ColorDeath,ST,ColorMap);
+  
+	//if(Time%50==0) { MDiffusion(Comp); }
+	
   Synchronous(1,Comp);
 
 	// ************************************************************************************//
@@ -227,11 +231,11 @@ void Update(void)
 
 	for(i=1;i<=nrow;i++)for(j=1;j<=ncol;j++){
 		if (Comp[i][j].val == MOSQUITO) {
-			ColorBirth[i][j].val = 0;
+			//ColorBirth[i][j].val = 0;
 			ColorDeath[i][j].val = 0;
 		} else {
-			ColorBirth[i][j].val = GetColorIndexFrom(Comp[i][j].val, Comp[i][j].fval );	//maps fval on Comp plane to val on Color plane
-			ColorDeath[i][j].val = GetColorIndexFrom(Comp[i][j].val, Comp[i][j].fval2 );	//maps fval on Comp plane to val on Color plane
+			//ColorBirth[i][j].val = GetColorIndexFrom(Comp[i][j].val, Comp[i][j].fval );	//maps fval on Comp plane to val on Color plane
+			ColorDeath[i][j].val = GetColorIndexFrom(Comp[i][j].val, 8 * Comp[i][j].fval2 );	//maps fval on Comp plane to val on Color plane
 		}
 	}
 	//while( Mouse()<=0) {}; // you can run the program continuously by commenting out this statement.
