@@ -39,7 +39,7 @@ void Initial(void)
 void InitialPlane(void)
 {
     MakePlane(&Competition/*,&SpaceTimePlane*/);
-    InitialSet(Competition,3,0,MOSQUITO,0.1,SPIDER1,0.1,SPIDER2,0.1); // I.o.w., half the grid starts as 1, the other are EMPTY (0)
+    InitialSet(Competition,3,0,MOSQUITO,0.01,SPIDER1,0.1,SPIDER2,0.1); 
     Boundaries2(Competition);
 }
 
@@ -50,10 +50,10 @@ void NextState(int row,int col)
 	int self = Competition[row][col].val;
 
 	double birth_rate_mosquito = 0.1;
-	double consumption1 = 0.7; 
-	double consumption2 = 0.7; 
-	double death1 = 0.05; //rood
-	double death2 = 0.04; //
+	double consumption1 = 0.3; 
+	double consumption2 = 0.3; 
+	double death1 = 0.03; //rood
+	double death2 = 0.01; //
 		
 	if(self == EMPTY) {
 		if(rand_neigh == MOSQUITO) {
