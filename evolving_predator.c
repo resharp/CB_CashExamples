@@ -202,6 +202,9 @@ void Update(void)
 	// ************************************************************************************//
   int i, j;
 
+	//Shutdown evolution after 20.000 steps
+	//if (Time == 20000) { mut_rate = 0.0; }
+	
 	if(Time%100==0) {
 
 		int r;
