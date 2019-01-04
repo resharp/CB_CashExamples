@@ -21,12 +21,17 @@ int MOSQUITO = 1;
 int SPIDER1 = 2;
 int SPIDER2 = 4;
 
+double birth_rate_mosquito = 0.1;
+double consumption1 = 0.50; 
+double consumption2 = 0.50; 
+double death1 = 0.048; //rood
+double death2 = 0.011; // blauw
 
 void Initial(void)
 {
     MaxTime = 2147483647; /* default=2147483647 */
-    nrow = 350; /* # of row (default=100)*/
-    ncol = 350; /* # of column (default=100)*/
+    nrow = 300; /* # of row (default=100)*/
+    ncol = 300; /* # of column (default=100)*/
     nplane = 1; /* # of planes (default=0)*/
     scale = 2; /* size of the window (default=2)*/
     boundary = WRAP; /* the type of boundary: FIXED, WRAP, ECHO (default=WRAP). Note that Margolus diffusion is not supported for ECHO. */
@@ -39,7 +44,7 @@ void Initial(void)
 void InitialPlane(void)
 {
     MakePlane(&Competition/*,&SpaceTimePlane*/);
-    InitialSet(Competition,3,0,MOSQUITO,0.01,SPIDER1,0.1,SPIDER2,0.1); 
+    InitialSet(Competition,3,0,MOSQUITO,0.01,SPIDER1,0.05,SPIDER2,0.01); 
     Boundaries2(Competition);
 }
 
@@ -49,12 +54,6 @@ void NextState(int row,int col)
 	int rand_neigh = RandomMoore8(Competition,row,col);
 	int self = Competition[row][col].val;
 
-	double birth_rate_mosquito = 0.1;
-	double consumption1 = 0.3; 
-	double consumption2 = 0.3; 
-	double death1 = 0.03; //rood
-	double death2 = 0.01; //
-		
 	if(self == EMPTY) {
 		if(rand_neigh == MOSQUITO) {
 			if(genrand_real1() < birth_rate_mosquito) {
@@ -94,6 +93,13 @@ void NextState(int row,int col)
 
 void Update(void)
 { 
+	// Na 10000 stappen verhogen we de consumptie iedere twee stappen met 0.01 tot een maximum van 0.55
+	// if (Time > 9999 && Time%2000 == 0 && consumption1 < 0.56 ) {
+		// consumption1 += 0.01; 
+		// consumption2 += 0.01; 
+		// printf("\n Consumption rate = %f", consumption1);	
+	// }
+
   Display(Competition);
   Asynchronous();//1,Competition);
   // SpaceTimePlot(SpaceTimePlane,Competition);
