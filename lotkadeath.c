@@ -22,9 +22,9 @@ int SPIDER1 = 2;
 int SPIDER2 = 4;
 
 double birth_rate_mosquito = 0.1;
-double consumption1 = 0.50; 
-double consumption2 = 0.50; 
-double death1 = 0.048; //rood
+double consumption1 = 0.4; 
+double consumption2 = 0.4; 
+double death1 = 0.06; //rood
 double death2 = 0.011; // blauw
 
 void Initial(void)
@@ -44,7 +44,7 @@ void Initial(void)
 void InitialPlane(void)
 {
     MakePlane(&Competition/*,&SpaceTimePlane*/);
-    InitialSet(Competition,3,0,MOSQUITO,0.01,SPIDER1,0.05,SPIDER2,0.01); 
+    InitialSet(Competition,3,0,MOSQUITO,0.01,SPIDER1,0.1,SPIDER2,0.1); 
     Boundaries2(Competition);
 }
 
@@ -88,6 +88,13 @@ void NextState(int row,int col)
 			Competition[row][col].val = 0;
 		}
 	}
+
+	//Kill all the red
+	// self = Competition[row][col].val;
+	// if (Time == 1000 && self==SPIDER1) {
+		// Competition[row][col].val = 0;
+	// } 
+	
 }	
 
 
@@ -101,11 +108,13 @@ void Update(void)
 	// }
 
   Display(Competition);
-  Asynchronous();//1,Competition);
-  // SpaceTimePlot(SpaceTimePlane,Competition);
+  //Asynchronous();//1,Competition);
+  Synchronous(1,Competition);
+	// SpaceTimePlot(SpaceTimePlane,Competition);
  
   Plot(1,Competition);
-  //if(Time%50==0) {MDiffusion(Competition);}
+  //if(Time%10==0) {MDiffusion(Competition);}
+	//PerfectMix(Competition);
   // Transfer the state of Vote to the SpaceTimePlane  
   // Display(Competition,SpaceTimePlane);
 	//while( Mouse()<=0) {}; // you can run the program continuously by commenting out this statement.
