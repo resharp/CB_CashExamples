@@ -20,15 +20,22 @@ static TYPE2** ST;			// Space time plot
 
 static TYPE2 empty= {0,0,0,0,0,0.,0.,0.,0.,0.}; // Predefine empty cell
 
-double init_birth_rate=0.55;	// Starting birthrate
-double init_death_rate=0.03;	// Startint deathrate
+double init_birth_rate=0.40;	// Starting birthrate
+double init_death_rate=0.05;	// Starting deathrate
 double init_fill_grade = 0.01;  //Initial filling of grid per species
 double deathrate = 0.01;		// Minimal deathrate
-double mut_rate= 0.005;		// Chance of mutations
-double mut_step= 0.15;		// Size of mutations
+double init_mut_rate= 0.005;		// Chance of mutations
+double mut_rate= 0.;		// Chance of mutations
+double mut_step= 0.2;		// Size of mutations
 double max_fval=1.;		// Upper bound (if applicable) for your evolvable parameter
 
 double birth_rate_mosquito = 0.1;
+
+int TIME_DETERMINISTIC_DEATH = 500;
+int TIME_STOP_EVOLUTION = 3000;
+int TIME_EXTRA_KILLING = 1000;
+int interval_extra_killing = 120;
+int TIME_FOR_PAUSE = 10000;
 
 int EMPTY = 0;
 int MOSQUITO = 1;
@@ -49,6 +56,7 @@ void Initial(void)
   /* useally, one does not have to change the followings */
   /* the value of boundary (default=(TYPE2){0,0,0,0,0,0.,0.,0.,0.,0.})*/
   boundaryvalue2 = (TYPE2){0,0,0,0,0,0.,0.,0.,0.,0.};
+	mut_rate = init_mut_rate;
 }
 
 void InitialPlane(void)
@@ -75,6 +83,10 @@ void InitialPlane(void)
     Comp[i][j].fval = init_birth_rate;
     Comp[i][j].fval2 = init_death_rate;
 		
+		int deterministic_age = 1./init_death_rate;
+		Comp[i][j].fval3 = deterministic_age;	// deterministic age
+		Comp[i][j].fval4 = 0;	// actual age			
+
 		double rand = genrand_real1();
 		if(rand < init_fill_grade){ 
       Comp[i][j].val = SPIDER1;
@@ -130,6 +142,7 @@ void NextState(int row,int col)
 			}
 		}  
   }
+
 	if (self.val == MOSQUITO) {
 
 		if (nei.val == SPIDER1 ) {
@@ -138,17 +151,39 @@ void NextState(int row,int col)
 			if(genrand_real1() < cons_rate) {
 
 				Comp[row][col]=nei;				//birth
+				Comp[row][col].fval4 = 0.;
 
 				//Mutate death
 				if(genrand_real1()<mut_rate) Comp[row][col].fval2 += mut_step*(genrand_real2()-0.5);	//mutations
 				if(Comp[row][col].fval2<0.) Comp[row][col].fval2 = (-1)*Comp[row][col].fval2;		//bounds mutations to decent values
 				if(Comp[row][col].fval2>1.) Comp[row][col].fval2 = 2. - Comp[row][col].fval2;
+				
+				Comp[row][col].fval3 = 1./(Comp[row][col].fval2 + deathrate); //Calculate deterministic age from death ratio 
 			}
 		}		
 	}
+	
+	self = Comp[row][col]; //including the guy that has just been born
+  
+	if(self.val == SPIDER1 ){
+    Comp[row][col].fval4 += 1.; // It's your birthday! (You started out at age 0)
+		
+		if (Time < TIME_DETERMINISTIC_DEATH) {
+			if( genrand_real1() < (Comp[row][col].fval2 + deathrate )) { 
+				Comp[row][col]=empty; //death
+			}
+		} else {
+			//deterministic death
+			double deterministic_age = Comp[row][col].fval3;
+			double current_age = Comp[row][col].fval4;
+			
+			if (current_age > deterministic_age) {
+				Comp[row][col]=empty; //death
+			}
+		}
 
-  if(self.val == SPIDER1 ){
-    if( genrand_real1() < (Comp[row][col].fval2 + deathrate )) { 
+		// Kill all high death rates (and do not mutate for a certain time (see above)
+		if (Time == TIME_EXTRA_KILLING && Comp[row][col].fval2 > 0.011) {
 			Comp[row][col]=empty; //death
 		}
 	}
@@ -173,8 +208,7 @@ void Update(void)
 {
   Display(Comp,ColorDeath,ST,ColorMap);
   
-	//if(Time%50==0) { MDiffusion(Comp); }
-	
+
   Synchronous(1,Comp);
 
 	// ************************************************************************************//
@@ -184,8 +218,13 @@ void Update(void)
 	// ************************************************************************************//
   int i, j;
 
-	//Shutdown evolution after 20.000 steps
-	if (Time == 7000) { mut_rate = 0.0; }
+	if ((Time > TIME_EXTRA_KILLING) && (Time < TIME_EXTRA_KILLING + interval_extra_killing)) { //stop mutation for a while after extra killing
+		mut_rate = 0.0;
+	} else {
+		mut_rate = init_mut_rate;
+	}
+	//Shutdown evolution after ... steps
+	if (Time == TIME_STOP_EVOLUTION) { init_mut_rate = 0.0; }
 	
 	if(Time%100==0) {
 
@@ -194,10 +233,16 @@ void Update(void)
 		{
 			i = genrand_int(1,nrow);
 			j = genrand_int(1,ncol);
-			if(Comp[i][j].val > 0)
+			if(Comp[i][j].val > MOSQUITO)
 			{
-				//PlotXY(Time,Comp[i][j].fval);
-				PlotXY(Time,Comp[i][j].fval2);
+				//Display death rate:
+				PlotXY(Time,deathrate + Comp[i][j].fval2);
+				
+				//Display deterministic_age:
+				//PlotXY(Time,Comp[i][j].fval3);
+				
+				//Display actual age
+				//PlotXY(Time,Comp[i][j].fval4);
 			}
 		}
 	}
@@ -221,5 +266,10 @@ void Update(void)
 			ColorDeath[i][j].val = GetColorIndexFrom(Comp[i][j].val, 8 * Comp[i][j].fval2 );	//maps fval on Comp plane to val on Color plane
 		}
 	}
-	//while( Mouse()<=0) {}; // you can run the program continuously by commenting out this statement.
+
+	//if(Time%20==0) { MDiffusion(Comp); }
+
+	if (Time > 0 && Time % TIME_FOR_PAUSE == 0) {
+		while( Mouse()<=0) {}; // you can run the program continuously by commenting out this statement.
+	}
 }
