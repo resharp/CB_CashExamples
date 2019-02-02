@@ -24,7 +24,7 @@ static int NumberAfter;
 
 void Initial(void)
 {
-  NrOfColors = 1;
+  NrOfColors = 2;
 	
 	MaxTime = 2147483647; /* default=2147483647 */
   nrow = 200; /* # of row (default=100)*/
